@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const apiPort = 3500
 
-const authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzIxODIyNTk3fQ.YczEnnOq1pxaUh_RuQQxYPn7lrlwhizZgp36WO7y-0Q"
+const authToken = process.env.AUTH_TOKEN
 
 export const handlePOST = async (url: string, data: any) => {
 
