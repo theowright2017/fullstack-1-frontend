@@ -1,8 +1,11 @@
 import * as React from "react";
 import Box from "@mui/material/Box";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import { handleGET, handlePOST } from "../api/handleREST";
+import CohortsModal from "./modal/CohortsModal";
 
-const cohortsColumns: GridColDef<(typeof rows)[number]>[] = [
+const cohortsColumns = [
 	{ field: "id", headerName: "ID", width: 90 },
 	{
 		field: "name",
@@ -14,13 +17,13 @@ const cohortsColumns: GridColDef<(typeof rows)[number]>[] = [
 		field: "examId",
 		headerName: "Exam Id",
 		width: 150,
-		type: "number",
+		type: "id",
 		editable: true,
 	},
 	{
 		field: "sessionId",
 		headerName: "Session Id",
-		type: "number",
+		type: "id",
 		width: 110,
 		editable: true,
 	},
@@ -38,99 +41,46 @@ const cohortsColumns: GridColDef<(typeof rows)[number]>[] = [
 	},
 ];
 
-const rows = [
-	{
-		id: 1,
-		name: "Snow",
-		examId: "Jon",
-		sessionId: "",
-		scheduleInfo: "",
-		students: "",
-	},
-	{
-		id: 2,
-		name: "Lannister",
-		examId: "Cersei",
-		sessionId: "",
-		scheduleInfo: "",
-		students: "",
-	},
-	{
-		id: 3,
-		name: "Lannister",
-		examId: "Jaime",
-		sessionId: "",
-		scheduleInfo: "",
-		students: "",
-	},
-	{
-		id: 4,
-		name: "Stark",
-		examId: "Arya",
-		sessionId: "",
-		scheduleInfo: "",
-		students: "",
-	},
-	{
-		id: 5,
-		name: "Targaryen",
-		examId: "Daenerys",
-		sessionId: null,
-		scheduleInfo: "",
-		students: "",
-	},
-	{
-		id: 6,
-		name: "Melisandre",
-		examId: null,
-		sessionId: "",
-		scheduleInfo: "",
-		students: "",
-	},
-	{
-		id: 7,
-		name: "Clifford",
-		examId: "Ferrara",
-		sessionId: "",
-		scheduleInfo: "",
-		students: "",
-	},
-	{
-		id: 8,
-		name: "Frances",
-		examId: "Rossini",
-		sessionId: "",
-		scheduleInfo: "",
-		students: "",
-	},
-	{
-		id: 9,
-		name: "Roxie",
-		examId: "Harvey",
-		sessionId: "",
-		scheduleInfo: "",
-		students: "",
-	},
-];
-
 export default function CohortsTable() {
+	const [open, setIsOpen] = React.useState(false);
+	const queryClient = useQueryClient();
+
+	const { isPending, isError, data, error } = useQuery({
+		queryKey: ["cohorts"],
+		queryFn: async () => {
+			const { cohorts } = await handleGET("/cohorts");
+
+			return cohorts;
+		},
+	});
+
+	const mutation = useMutation({
+		mutationFn: async (cohort) => handlePOST("/cohorts", cohort),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["cohorts"] });
+		},
+	});
+
 	return (
-		<Box sx={{ height: 200, width: "50%", border: '2px solid orange' }}>
-			<DataGrid
-				rows={rows}
-				columns={cohortsColumns}
-				initialState={{
-					pagination: {
-						paginationModel: {
-							pageSize: 5,
+		<>
+			<Box sx={{ height: 200, width: "50%", border: "2px solid purple" }}>
+				<DataGrid
+					rows={data}
+					columns={cohortsColumns}
+					initialState={{
+						pagination: {
+							paginationModel: {
+								pageSize: 100,
+							},
 						},
-					},
-				}}
-				pageSizeOptions={[5]}
-				checkboxSelection
-				disableRowSelectionOnClick
-			/>
-            <button onClick={() => console.log("clicked")}>Add</button>
-		</Box>
+					}}
+					pageSizeOptions={[5]}
+					checkboxSelection
+					disableRowSelectionOnClick
+				/>
+				<button onClick={() => setIsOpen(true)}>Add</button>
+			</Box>
+			{open && <CohortsModal setIsOpen={setIsOpen} mutation={mutation} />}
+		</>
 	);
 }

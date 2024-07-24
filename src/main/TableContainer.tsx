@@ -1,5 +1,3 @@
-import React from "react";
-import Table from "../components/ExamTable";
 import ExamTable from "../components/ExamTable";
 import CohortsTable from "../components/CohortsTable";
 import StudentsTable from "../components/StudentsTable";
@@ -13,6 +11,7 @@ const style = {
 const botCOntStyle = {
     display: 'flex',
     flexDirection: 'row',
+	marginTop: '50px'
 }
 
 export default function TableContainer() {

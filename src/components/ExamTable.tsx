@@ -1,8 +1,11 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import ExamModal from './modal/ExamModal';
+import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import { handleGET, handlePOST } from '../api/handleREST';
 
-const examColumns: GridColDef<(typeof rows)[number]>[] = [
+const examColumns = [
   { field: 'id', headerName: 'ID', width: 90 },
   {
     field: 'name',
@@ -30,36 +33,49 @@ const examColumns: GridColDef<(typeof rows)[number]>[] = [
   },
 ];
 
-const rows = [
-  { id: 1, name: 'Snow', description: 'Jon', cohorts: 14, sessions: 'one, two' },
-  { id: 2, name: 'Lannister', description: 'Cersei', cohorts: 31, sessions: 'one, two' },
-  { id: 3, name: 'Lannister', description: 'Jaime', cohorts: 31, sessions: 'one, two' },
-  { id: 4, name: 'Stark', description: 'Arya', cohorts: 11, sessions: 'one, two' },
-  { id: 5, name: 'Targaryen', description: 'Daenerys', cohorts: null, sessions: 'one, two' },
-  { id: 6, name: 'Melisandre', description: null, cohorts: 150, sessions: 'one, two' },
-  { id: 7, name: 'Clifford', description: 'Ferrara', cohorts: 44, sessions: 'one, two' },
-  { id: 8, name: 'Frances', description: 'Rossini', cohorts: 36, sessions: 'one, two' },
-  { id: 9, name: 'Roxie', description: 'Harvey', cohorts: 65, sessions: 'one, two' },
-];
-
 export default function ExamTable() {
-  return (
-    <Box sx={{ height: '50%', width: '100%', border: '2px solid blue' }}>
-      <DataGrid
-        rows={rows}
-        columns={examColumns}
-        initialState={{
-          pagination: {
-            paginationModel: {
-              pageSize: 5,
-            },
-          },
-        }}
-        pageSizeOptions={[5]}
-        checkboxSelection
-        disableRowSelectionOnClick
-      />
-      <button onClick={() => console.log("clicked")}>Add</button>
-    </Box>
-  );
+	const [open, setIsOpen] = React.useState(false);
+	const queryClient = useQueryClient();
+
+	const { isPending, isError, data, error } = useQuery({
+		queryKey: ["exams"],
+		queryFn: async () => {
+			const { exam } = await handleGET("/exams");
+
+			return exam;
+		},
+	});
+
+	const mutation = useMutation({
+		mutationFn: async (exam) => handlePOST("/exams", exam),
+		onSuccess: () => {
+
+			queryClient.invalidateQueries({ queryKey: ["exams"] });
+		},
+	});
+
+	return (
+		<>
+			<Box sx={{ height: 200, width: "100%", border: "2px solid purple" }}>
+				<DataGrid
+					rows={data}
+					columns={examColumns}
+					initialState={{
+						pagination: {
+							paginationModel: {
+								pageSize: 100,
+							},
+						},
+					}}
+					pageSizeOptions={[5]}
+					checkboxSelection
+					disableRowSelectionOnClick
+				/>
+				<button onClick={() => setIsOpen(true)}>Add</button>
+			</Box>
+			{open && <ExamModal setIsOpen={setIsOpen} mutation={mutation} />}
+		</>
+	);
 }
+
+
